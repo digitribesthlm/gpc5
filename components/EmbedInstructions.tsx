@@ -34,35 +34,33 @@ export const EmbedInstructions: React.FC<EmbedInstructionsProps> = ({ apiHost })
 
   const divCode = `<div id="root" 
      data-api-host="${apiHost}" 
-     data-widget-mode="embedded">
+     data-widget-mode="embedded"
+     data-page-context="Technical SEO: Crawl Budget Optimization"
+     data-persona-clues='{"Tech": 2, "Advanced": 1, "Innovation": 1, "Efficiency-Focused": 3}'>
 </div>`;
 
-  const scriptCode = `<script>
-document.addEventListener('DOMContentLoaded', function() {
-  if (window.digiGenWidget && typeof window.digiGenWidget.trackPageView === 'function') {
-    // ---- Replace with your page's dynamic data ----
-    const articleContext = "Technical SEO: Crawl Budget Optimization";
-    const personaClues = { Tech: 2, Advanced: 1, Innovation: 1, 'Efficiency-Focused': 3 };
-    // ---------------------------------------------
-    
-    window.digiGenWidget.trackPageView(articleContext, personaClues);
-  }
-});
-</script>`;
+  const explanation = `
+This widget tracks user behavior using cookies. To inform the widget about the current page the user is viewing, you must add the following data attributes to the root div.
+
+- data-page-context: A unique name or description for the current article.
+- data-persona-clues: A JSON string defining the persona weights for this article.
+
+Your server-side code (e.g., PHP in WordPress) should dynamically populate these attributes for each article. The widget will handle the rest automatically.
+`;
 
   return (
     <div className="bg-dark-800/50 backdrop-blur-lg rounded-lg shadow-lg p-6 border border-dark-700/50 text-left animate-fadeIn">
       <h2 className="text-2xl font-semibold mb-4 text-gray-100 text-center">How to Embed on Your Site</h2>
       <div className="space-y-6">
         <div>
-          <h3 className="text-lg font-medium text-gray-200 mb-2">Step 1: Add the Widget's Script and HTML</h3>
-          <p className="text-gray-400 mb-3 text-sm">First, add your widget's built JS and CSS files to your site (e.g., via a WordPress `functions.php` file). Then, place this `div` in your HTML template where you want the recommendation widget to appear (e.g., in a sidebar).</p>
-          <CodeBlock code={divCode} />
+          <h3 className="text-lg font-medium text-gray-200 mb-2">Step 1: Add Widget Scripts</h3>
+          <p className="text-gray-400 mb-3 text-sm">First, ensure your site loads the widget's built JS and CSS files. For WordPress, this is typically done via an 'enqueue' function in `functions.php`.</p>
         </div>
         <div>
-          <h3 className="text-lg font-medium text-gray-200 mb-2">Step 2: Track Page Views</h3>
-          <p className="text-gray-400 mb-3 text-sm">On your article pages, add this script. It tells the widget what article the user is currently reading, which allows the AI to generate a personalized suggestion. You must dynamically replace `articleContext` and `personaClues` with the data for each specific article.</p>
-          <CodeBlock code={scriptCode} />
+          <h3 className="text-lg font-medium text-gray-200 mb-2">Step 2: Place and Configure the HTML Snippet</h3>
+          <p className="text-gray-400 mb-3 text-sm">Place this `div` in your template where the widget should appear. Your website's backend must dynamically fill in the `data-page-context` and `data-persona-clues` for the current page.</p>
+          <CodeBlock code={divCode} />
+          <p className="text-gray-400 mt-3 text-xs">{explanation}</p>
         </div>
       </div>
     </div>

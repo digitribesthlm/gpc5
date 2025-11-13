@@ -1,5 +1,5 @@
 
-import React, { useState, useCallback, useEffect, useMemo, useRef } from 'react';
+import React, { useState, useCallback, useEffect, useMemo } from 'react';
 import { ContentDisplay } from './components/ContentDisplay';
 import { SparkIcon } from './components/icons/SparkIcon';
 import { generateSuggestion, submitLead } from './services/geminiService';
@@ -122,31 +122,6 @@ const App: React.FC = () => {
   const [submissionMessage, setSubmissionMessage] = useState('');
   const [apiHost, setApiHost] = useState('');
 
-  // Determine widget mode on mount
-  useEffect(() => {
-    const rootElement = document.getElementById('root');
-    const mode = rootElement?.getAttribute('data-widget-mode');
-    if (mode === 'embedded') {
-      setWidgetMode('embedded');
-    }
-    // In simulator mode, determine the API host for the embed instructions
-    setApiHost(`${window.location.protocol}//${window.location.host}`);
-  }, []);
-
-  // Save state to cookies whenever it changes
-  useEffect(() => {
-    try {
-      const expires = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toUTCString(); // 30-day expiry
-      const parentDomain = getParentDomain();
-      const options = `domain=${parentDomain}; path=/; expires=${expires}; SameSite=Lax; Secure`;
-
-      document.cookie = `${CLICK_HISTORY_COOKIE}=${encodeURIComponent(JSON.stringify(clickHistory))}; ${options}`;
-      document.cookie = `${PERSONA_SCORES_COOKIE}=${encodeURIComponent(JSON.stringify(personaScores))}; ${options}`;
-    } catch (error) {
-      console.error("Failed to save to cookie", error);
-    }
-  }, [clickHistory, personaScores]);
-  
   const dominantPersona = useMemo(() => calculateDominantPersona(personaScores), [personaScores]);
 
   const links: SiteLink[] = useMemo(() => [
@@ -190,7 +165,7 @@ const App: React.FC = () => {
   }, [links]);
 
   const trackUserInteraction = useCallback((context: string, personaClues: PersonaScores) => {
-    // Prevent tracking the same article if it's already in the history
+    // Prevent tracking the same article if it's already in the history from the cookie
     if (clickHistory.includes(context)) {
       console.log("DigiGen Widget: Context already tracked, skipping.", context);
       return;
@@ -205,34 +180,62 @@ const App: React.FC = () => {
     }
     setPersonaScores(newScores);
     
+    // The dominant persona is calculated from the new scores.
+    const newDominantPersona = calculateDominantPersona(newScores);
+    
+    // Generate suggestion if there's enough history.
     if (newHistory.length >= 2) {
-      const newDominantPersona = calculateDominantPersona(newScores);
       generateAndSetSuggestion(newHistory, newDominantPersona);
     }
   }, [clickHistory, personaScores, generateAndSetSuggestion]);
 
-  // Use a ref to hold the latest version of the tracking function
-  // This avoids stale closures when the function is attached to the window object.
-  const trackUserInteractionRef = useRef(trackUserInteraction);
+  // On initial mount, check the mode and automatically track a page view if in embedded mode.
   useEffect(() => {
-    trackUserInteractionRef.current = trackUserInteraction;
-  }, [trackUserInteraction]);
+    const rootElement = document.getElementById('root');
+    if (!rootElement) return;
 
-  // Expose the public API for the parent site to call
-  useEffect(() => {
-    const api = {
-      trackPageView: (context: string, personaClues: PersonaScores) => {
-        console.log('DigiGen Widget: trackPageView called.', { context, personaClues });
-        trackUserInteractionRef.current(context, personaClues);
+    // Determine widget mode
+    const mode = rootElement.getAttribute('data-widget-mode');
+    if (mode === 'embedded') {
+      setWidgetMode('embedded');
+      
+      // In embedded mode, automatically track the current page from data attributes
+      const context = rootElement.getAttribute('data-page-context');
+      const cluesString = rootElement.getAttribute('data-persona-clues');
+
+      if (context && cluesString) {
+        try {
+          const personaClues = JSON.parse(cluesString);
+          console.log('DigiGen Widget: Auto-tracking page view from data attributes.', { context, personaClues });
+          trackUserInteraction(context, personaClues);
+        } catch (e) {
+          console.error("DigiGen Widget Error: Could not parse 'data-persona-clues' JSON.", e);
+        }
+      } else {
+        console.warn("DigiGen Widget: In 'embedded' mode, but 'data-page-context' or 'data-persona-clues' are missing.");
       }
-    };
-    (window as any).digiGenWidget = api;
+    }
 
-    return () => { // Cleanup on unmount
-      delete (window as any).digiGenWidget;
-    };
-  }, []); // Run only once on mount
+    // In simulator mode, determine the API host for the embed instructions
+    setApiHost(`${window.location.protocol}//${window.location.host}`);
+    
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // This effect should only run once on mount.
 
+  // Save state to cookies whenever it changes
+  useEffect(() => {
+    try {
+      const expires = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toUTCString(); // 30-day expiry
+      const parentDomain = getParentDomain();
+      const options = `domain=${parentDomain}; path=/; expires=${expires}; SameSite=Lax; Secure`;
+
+      document.cookie = `${CLICK_HISTORY_COOKIE}=${encodeURIComponent(JSON.stringify(clickHistory))}; ${options}`;
+      document.cookie = `${PERSONA_SCORES_COOKIE}=${encodeURIComponent(JSON.stringify(personaScores))}; ${options}`;
+    } catch (error) {
+      console.error("Failed to save to cookie", error);
+    }
+  }, [clickHistory, personaScores]);
+  
   // For simulator UI only
   const handleLinkClick = useCallback(async (link: SiteLink) => {
     setCurrentPage(link.page);
@@ -289,6 +292,8 @@ const App: React.FC = () => {
   };
 
   // EMBEDDED MODE: Render only the widget sidebar.
+  // After a page view is tracked on mount, this component will re-render with the updated
+  // cookie data (clickHistory, personaScores) and show the correct UI state.
   if (widgetMode === 'embedded') {
     return (
       <div className="max-w-md mx-auto p-4">
