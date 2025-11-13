@@ -10,21 +10,29 @@ export default async function handler(req: Request) {
   const mainDomainEnv = process.env.MAIN_DOMAIN;
   const supDomainEnv = process.env.SUPDOMAIN;
 
-  // Construct a valid origin URL. Browsers require the scheme (https://).
-  // We prioritize the MAIN_DOMAIN as that's where the widget is likely embedded.
-  const getCorsOrigin = () => {
+  // Construct allowed origins. Support both www and non-www versions.
+  const getAllowedOrigins = () => {
+    const origins = [];
     if (mainDomainEnv && mainDomainEnv.trim()) {
-      return `https://${mainDomainEnv.trim()}`;
+      const domain = mainDomainEnv.trim();
+      origins.push(`https://${domain}`);
+      // Also support www version if not already included
+      if (!domain.startsWith('www.')) {
+        origins.push(`https://www.${domain}`);
+      } else {
+        // If www is in the env, also support non-www
+        origins.push(`https://${domain.replace('www.', '')}`);
+      }
     }
     if (supDomainEnv && supDomainEnv.trim()) {
-      // This allows testing the widget directly on its own domain.
-      return `https://${supDomainEnv.trim()}`;
+      origins.push(`https://${supDomainEnv.trim()}`);
     }
-    // Fallback for local development or if env vars are not set.
-    return '*';
+    return origins;
   }
   
-  const corsOrigin = getCorsOrigin();
+  const allowedOrigins = getAllowedOrigins();
+  const requestOrigin = req.headers.get('origin') || '';
+  const corsOrigin = allowedOrigins.includes(requestOrigin) ? requestOrigin : (allowedOrigins[0] || '*');
 
   const corsHeaders = {
     'Access-Control-Allow-Origin': corsOrigin,

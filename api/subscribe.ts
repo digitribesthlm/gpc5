@@ -9,17 +9,29 @@ export default async function handler(req: Request) {
   const supDomainEnv = process.env.SUPDOMAIN;
   const webhookUrl = process.env.N8N_WEBHOOK_URL;
 
-  const getCorsOrigin = () => {
+  // Construct allowed origins. Support both www and non-www versions.
+  const getAllowedOrigins = () => {
+    const origins = [];
     if (mainDomainEnv && mainDomainEnv.trim()) {
-      return `https://${mainDomainEnv.trim()}`;
+      const domain = mainDomainEnv.trim();
+      origins.push(`https://${domain}`);
+      // Also support www version if not already included
+      if (!domain.startsWith('www.')) {
+        origins.push(`https://www.${domain}`);
+      } else {
+        // If www is in the env, also support non-www
+        origins.push(`https://${domain.replace('www.', '')}`);
+      }
     }
     if (supDomainEnv && supDomainEnv.trim()) {
-      return `https://${supDomainEnv.trim()}`;
+      origins.push(`https://${supDomainEnv.trim()}`);
     }
-    return '*';
+    return origins;
   }
-
-  const corsOrigin = getCorsOrigin();
+  
+  const allowedOrigins = getAllowedOrigins();
+  const requestOrigin = req.headers.get('origin') || '';
+  const corsOrigin = allowedOrigins.includes(requestOrigin) ? requestOrigin : (allowedOrigins[0] || '*');
   
   const corsHeaders = {
     'Access-Control-Allow-Origin': corsOrigin,
