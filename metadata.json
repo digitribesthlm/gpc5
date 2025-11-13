@@ -1,0 +1,5 @@
+{
+  "name": "Gemini Personalized Content",
+  "description": "A digital agency website that uses the Gemini API to dynamically personalize content in real-time based on the user's link-click history, creating a unique and relevant browsing experience.",
+  "requestFramePermissions": []
+}
