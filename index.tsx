@@ -8,9 +8,19 @@ import App from './App';
 // before we try to mount the React app to it.
 document.addEventListener('DOMContentLoaded', () => {
   // The widget mounts to a <div id="root"></div> element.
-  // For cross-domain embedding (e.g., in WordPress), this element should also have
-  // a 'data-api-host' attribute pointing to the widget's backend server.
-  // Example: <div id="root" data-api-host="https://reco.digigrowth.se"></div>
+  // This element can be configured with data-* attributes:
+  //
+  // 1. `data-api-host`: (Required for embedding)
+  //    The full URL to the widget's backend server.
+  //    Example: data-api-host="https://reco.digigrowth.se"
+  //
+  // 2. `data-widget-mode`: (Optional, for embedding)
+  //    Sets the UI mode. Use "embedded" to hide the simulator UI
+  //    when the widget is live on your main site. Defaults to "simulator".
+  //    Example: data-widget-mode="embedded"
+  //
+  // Full example for WordPress:
+  // <div id="root" data-api-host="https://reco.digigrowth.se" data-widget-mode="embedded"></div>
   const rootElement = document.getElementById('root');
   if (!rootElement) {
     console.error("DigiGen Widget Error: Could not find the root element with id='root'. Please ensure this div exists on the page.");
