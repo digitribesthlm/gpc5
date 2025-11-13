@@ -40,12 +40,9 @@ export const EmbedInstructions: React.FC<EmbedInstructionsProps> = ({ apiHost })
 </div>`;
 
   const explanation = `
-This widget tracks user behavior using cookies. To inform the widget about the current page the user is viewing, you must add the following data attributes to the root div.
+Your server-side code (e.g., PHP in WordPress) should dynamically populate these attributes for each article. The widget reads them on page load to update the user's profile.
 
-- data-page-context: A unique name or description for the current article.
-- data-persona-clues: A JSON string defining the persona weights for this article.
-
-Your server-side code (e.g., PHP in WordPress) should dynamically populate these attributes for each article. The widget will handle the rest automatically.
+**Note:** On this simulator page, the article list remains visible for testing. When embedded on your live site with \`data-widget-mode="embedded"\`, only the AI recommendation box will appear.
 `;
 
   return (
@@ -54,13 +51,13 @@ Your server-side code (e.g., PHP in WordPress) should dynamically populate these
       <div className="space-y-6">
         <div>
           <h3 className="text-lg font-medium text-gray-200 mb-2">Step 1: Add Widget Scripts</h3>
-          <p className="text-gray-400 mb-3 text-sm">First, ensure your site loads the widget's built JS and CSS files. For WordPress, this is typically done via an 'enqueue' function in `functions.php`.</p>
+          <p className="text-gray-400 mb-3 text-sm">First, ensure your site loads the widget's built JS and CSS files. For WordPress, this is typically done via an 'enqueue' function in \`functions.php\`.</p>
         </div>
         <div>
           <h3 className="text-lg font-medium text-gray-200 mb-2">Step 2: Place and Configure the HTML Snippet</h3>
-          <p className="text-gray-400 mb-3 text-sm">Place this `div` in your template where the widget should appear. Your website's backend must dynamically fill in the `data-page-context` and `data-persona-clues` for the current page.</p>
+          <p className="text-gray-400 mb-3 text-sm">Place this \`div\` in your template where the widget should appear. Your website's backend must dynamically fill in the \`data-page-context\` and \`data-persona-clues\` for the current page.</p>
           <CodeBlock code={divCode} />
-          <p className="text-gray-400 mt-3 text-xs">{explanation}</p>
+          <p className="text-gray-400 mt-3 text-xs whitespace-pre-wrap">{explanation}</p>
         </div>
       </div>
     </div>

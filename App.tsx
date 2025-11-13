@@ -166,58 +166,73 @@ const App: React.FC = () => {
 
   const trackUserInteraction = useCallback((context: string, personaClues: PersonaScores) => {
     // Prevent tracking the same article if it's already in the history from the cookie
-    if (clickHistory.includes(context)) {
-      console.log("DigiGen Widget: Context already tracked, skipping.", context);
-      return;
-    }
-    
-    const newHistory = [...clickHistory, context];
-    setClickHistory(newHistory);
+    setClickHistory(prevHistory => {
+      if (prevHistory.includes(context)) {
+        console.log("DigiGen Widget: Context already tracked, skipping.", context);
+        return prevHistory;
+      }
+      
+      const newHistory = [...prevHistory, context];
+  
+      setPersonaScores(prevScores => {
+        const newScores = { ...prevScores };
+        for (const [key, value] of Object.entries(personaClues)) {
+            newScores[key as PersonaDimension] = (newScores[key as PersonaDimension] || 0) + value;
+        }
+        
+        // The dominant persona is calculated from the new scores.
+        const newDominantPersona = calculateDominantPersona(newScores);
+        
+        // Generate suggestion if there's enough history.
+        if (newHistory.length >= 2) {
+          generateAndSetSuggestion(newHistory, newDominantPersona);
+        }
 
-    const newScores = { ...personaScores };
-    for (const [key, value] of Object.entries(personaClues)) {
-        newScores[key as PersonaDimension] = (newScores[key as PersonaDimension] || 0) + value;
-    }
-    setPersonaScores(newScores);
-    
-    // The dominant persona is calculated from the new scores.
-    const newDominantPersona = calculateDominantPersona(newScores);
-    
-    // Generate suggestion if there's enough history.
-    if (newHistory.length >= 2) {
-      generateAndSetSuggestion(newHistory, newDominantPersona);
-    }
-  }, [clickHistory, personaScores, generateAndSetSuggestion]);
+        return newScores;
+      });
 
-  // On initial mount, check the mode and automatically track a page view if in embedded mode.
+      return newHistory;
+    });
+
+  }, [generateAndSetSuggestion]);
+
+  // This hook runs once on mount to configure the widget.
   useEffect(() => {
     const rootElement = document.getElementById('root');
     if (!rootElement) return;
 
-    // Determine widget mode
-    const mode = rootElement.getAttribute('data-widget-mode');
-    if (mode === 'embedded') {
-      setWidgetMode('embedded');
-      
-      // In embedded mode, automatically track the current page from data attributes
-      const context = rootElement.getAttribute('data-page-context');
-      const cluesString = rootElement.getAttribute('data-persona-clues');
+    // Step 1: Determine API Host for embed instructions and cross-domain check.
+    const apiHostValue = rootElement.getAttribute('data-api-host') || `${window.location.protocol}//${window.location.host}`;
+    setApiHost(apiHostValue);
 
-      if (context && cluesString) {
-        try {
-          const personaClues = JSON.parse(cluesString);
-          console.log('DigiGen Widget: Auto-tracking page view from data attributes.', { context, personaClues });
-          trackUserInteraction(context, personaClues);
-        } catch (e) {
-          console.error("DigiGen Widget Error: Could not parse 'data-persona-clues' JSON.", e);
-        }
-      } else {
-        console.warn("DigiGen Widget: In 'embedded' mode, but 'data-page-context' or 'data-persona-clues' are missing.");
-      }
+    // Step 2: Determine Widget Mode.
+    // The widget is only in "embedded" mode if the attribute is set AND the page host
+    // is different from the API host. This prevents the simulator UI from breaking
+    // when testing with embed attributes on the simulator domain.
+    const isDifferentHost = new URL(apiHostValue).host !== window.location.host;
+    const declaredModeIsEmbedded = rootElement.getAttribute('data-widget-mode') === 'embedded';
+
+    if (declaredModeIsEmbedded && isDifferentHost) {
+      setWidgetMode('embedded');
+    } else {
+      setWidgetMode('simulator');
     }
 
-    // In simulator mode, determine the API host for the embed instructions
-    setApiHost(`${window.location.protocol}//${window.location.host}`);
+    // Step 3: Automatically track page view if data is present.
+    // This now runs REGARDLESS of mode, allowing developers to test the auto-tracking
+    // feature directly on the simulator by adding attributes to the HTML.
+    const context = rootElement.getAttribute('data-page-context');
+    const cluesString = rootElement.getAttribute('data-persona-clues');
+
+    if (context && cluesString) {
+      try {
+        const personaClues = JSON.parse(cluesString);
+        console.log('DigiGen Widget: Auto-tracking page view from data attributes.', { context, personaClues });
+        trackUserInteraction(context, personaClues);
+      } catch (e) {
+        console.error("DigiGen Widget Error: Could not parse 'data-persona-clues' JSON.", e);
+      }
+    }
     
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // This effect should only run once on mount.
@@ -292,8 +307,6 @@ const App: React.FC = () => {
   };
 
   // EMBEDDED MODE: Render only the widget sidebar.
-  // After a page view is tracked on mount, this component will re-render with the updated
-  // cookie data (clickHistory, personaScores) and show the correct UI state.
   if (widgetMode === 'embedded') {
     return (
       <div className="max-w-md mx-auto p-4">
