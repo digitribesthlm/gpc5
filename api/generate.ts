@@ -28,9 +28,9 @@ export default async function handler(req: Request) {
   }
 
   try {
-    const apiKey = process.env.API_KEY;
+    const apiKey = process.env.API_KEY || process.env.GEMINI_API_KEY;
     if (!apiKey) {
-      throw new Error("API_KEY environment variable not set.");
+      throw new Error("API_KEY or GEMINI_API_KEY environment variable not set.");
     }
     const ai = new GoogleGenAI({ apiKey });
 
