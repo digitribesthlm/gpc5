@@ -6,15 +6,16 @@ interface SuggestionPayload {
   };
 }
 
-// CRITICAL FIX: Define the absolute base URL for your Vercel API routes.
-// This ensures that API calls work correctly even when the widget is embedded
-// on a different domain (like your WordPress site).
-const API_BASE_URL = 'https://reco.digigrowth.se';
+// By using a relative path, we avoid hardcoding the API host.
+// This makes the widget more portable. For cross-domain embedding,
+// the main site's server should be configured to proxy requests 
+// from /api/* to the Vercel deployment hosting this widget's API.
+const API_BASE_URL = '';
 
 
 export async function generateSuggestion(history: string[], dominantPersona: string, availableArticleTitles: string[]): Promise<SuggestionPayload> {
   
-  // Call our secure Vercel API route using the absolute URL
+  // Call our secure Vercel API route.
   const response = await fetch(`${API_BASE_URL}/api/generate`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -40,7 +41,7 @@ interface LeadPayload {
 
 export async function submitLead(payload: LeadPayload): Promise<{ message: string }> {
 
-  // Call our secure webhook handler API route using the absolute URL
+  // Call our secure webhook handler API route.
   const response = await fetch(`${API_BASE_URL}/api/subscribe`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },

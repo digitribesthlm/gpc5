@@ -7,23 +7,42 @@ export const config = {
 };
 
 export default async function handler(req: Request) {
-  const mainDomain = process.env.MAIN_DOMAIN || '*';
+  const mainDomainEnv = process.env.MAIN_DOMAIN;
+  const supDomainEnv = process.env.SUPDOMAIN;
+
+  // Construct a valid origin URL. Browsers require the scheme (https://).
+  // We prioritize the MAIN_DOMAIN as that's where the widget is likely embedded.
+  const getCorsOrigin = () => {
+    if (mainDomainEnv && mainDomainEnv.trim()) {
+      return `https://${mainDomainEnv.trim()}`;
+    }
+    if (supDomainEnv && supDomainEnv.trim()) {
+      // This allows testing the widget directly on its own domain.
+      return `https://${supDomainEnv.trim()}`;
+    }
+    // Fallback for local development or if env vars are not set.
+    return '*';
+  }
+  
+  const corsOrigin = getCorsOrigin();
+
+  const corsHeaders = {
+    'Access-Control-Allow-Origin': corsOrigin,
+    'Access-Control-Allow-Methods': 'POST, OPTIONS',
+    'Access-Control-Allow-Headers': 'Content-Type',
+  };
 
   // Handle CORS preflight request for security
   if (req.method === 'OPTIONS') {
     return new Response(null, {
       status: 204,
-      headers: {
-        'Access-Control-Allow-Origin': mainDomain,
-        'Access-Control-Allow-Methods': 'POST, OPTIONS',
-        'Access-Control-Allow-Headers': 'Content-Type',
-      },
+      headers: corsHeaders,
     });
   }
 
   if (req.method !== 'POST') {
     return new Response(JSON.stringify({ error: 'Method Not Allowed' }), {
-      status: 405, headers: { 'Content-Type': 'application/json' }
+      status: 405, headers: { 'Content-Type': 'application/json', ...corsHeaders }
     });
   }
 
@@ -68,7 +87,7 @@ export default async function handler(req: Request) {
 
     return new Response(jsonText, {
       status: 200,
-      headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': mainDomain },
+      headers: { 'Content-Type': 'application/json', ...corsHeaders },
     });
 
   } catch (error) {
@@ -76,7 +95,7 @@ export default async function handler(req: Request) {
     const errorMessage = error instanceof Error ? error.message : "An unknown error occurred.";
     return new Response(JSON.stringify({ error: 'Failed to generate suggestion.', details: errorMessage }), {
       status: 500,
-      headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': mainDomain },
+      headers: { 'Content-Type': 'application/json', ...corsHeaders },
     });
   }
 }

@@ -45,6 +45,22 @@ const getCookie = (name: string): string | null => {
     return null;
 };
 
+// Helper to get the parent domain for sharing cookies across subdomains.
+// e.g., from 'www.digigrowth.se' or 'reco.digigrowth.se', it returns '.digigrowth.se'
+const getParentDomain = () => {
+    const hostname = window.location.hostname;
+    if (hostname === 'localhost') {
+        return 'localhost';
+    }
+    const parts = hostname.split('.');
+    // This handles domains like 'example.com' and 'www.example.com' or 'sub.example.com'
+    if (parts.length > 1) {
+        return `.${parts.slice(-2).join('.')}`;
+    }
+    return hostname;
+};
+
+
 const CLICK_HISTORY_COOKIE = 'dg_hist';
 const PERSONA_SCORES_COOKIE = 'dg_ps';
 
@@ -121,9 +137,10 @@ const App: React.FC = () => {
   useEffect(() => {
     try {
       const expires = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toUTCString(); // 30-day expiry
+      const parentDomain = getParentDomain();
       // Set path=/ and the parent domain to be accessible across the site.
       // This is CRITICAL for sharing state between www.digigrowth.se and reco.digigrowth.se
-      const options = `domain=.digigrowth.se; path=/; expires=${expires}; SameSite=Lax; Secure`;
+      const options = `domain=${parentDomain}; path=/; expires=${expires}; SameSite=Lax; Secure`;
 
       document.cookie = `${CLICK_HISTORY_COOKIE}=${encodeURIComponent(JSON.stringify(clickHistory))}; ${options}`;
       document.cookie = `${PERSONA_SCORES_COOKIE}=${encodeURIComponent(JSON.stringify(personaScores))}; ${options}`;
