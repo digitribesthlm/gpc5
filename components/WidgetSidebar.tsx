@@ -77,50 +77,50 @@ export const WidgetSidebar: React.FC<WidgetSidebarProps> = ({
             </div>
         )}
 
-        {/* This section is shown once a user action has been tracked */}
-        {clickHistory.length > 0 && (
-            <div className="bg-dark-800/30 backdrop-blur-lg rounded-lg shadow-lg p-6 border border-dark-700/50">
-                <h3 className="flex items-center text-xl font-semibold mb-4 text-gray-200">
-                    <UserIcon className="w-6 h-6 mr-3 text-primary-light" />
-                    Detected Profile
-                </h3>
-                <div className="text-center bg-dark-900/50 p-4 rounded-lg">
-                    <p className="text-2xl font-bold text-secondary animate-fadeIn">{dominantPersona}</p>
-                </div>
-            </div>
-        )}
+        {/* Profile detection removed for privacy */}
         
         {/* The suggestion widget appears after 2+ actions */}
         {clickHistory.length > 1 && (
-        <div id="suggestion-widget" className="bg-gradient-to-br from-primary/30 to-secondary/30 backdrop-blur-lg rounded-lg shadow-2xl p-6 border border-primary/50 animate-fadeIn">
-            <h3 className="text-xl font-bold mb-4 text-white">Your Personal AI Recommendation</h3>
-            {isLoading && <p className="text-gray-300 animate-pulse">Generating your personal hook...</p>}
-            {error && <p className="text-red-400">{error}</p>}
+        <div id="suggestion-widget" className="relative bg-gradient-to-br from-purple-600 to-blue-500 rounded-xl shadow-2xl p-8 border-4 border-white/20 animate-fadeIn overflow-hidden">
+            {/* Decorative elements */}
+            <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16"></div>
+            <div className="absolute bottom-0 left-0 w-24 h-24 bg-white/10 rounded-full -ml-12 -mb-12"></div>
+            <div className="relative z-10">
+            <div className="flex items-center gap-3 mb-6">
+                <div className="flex-shrink-0 w-12 h-12 bg-white/20 rounded-full flex items-center justify-center">
+                    <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                    </svg>
+                </div>
+                <h3 className="text-2xl font-bold text-white">AI Rekommenderar</h3>
+            </div>
+            {isLoading && <p className="text-white/90 animate-pulse">Genererar din personliga rekommendation...</p>}
+            {error && <p className="text-red-200 bg-red-500/20 p-3 rounded-lg">{error}</p>}
             {suggestion && !submissionMessage && (
                 <div className="animate-fadeIn">
-                    <h4 className="font-semibold text-lg text-gray-100">{suggestion.title}</h4>
-                    <p className="mt-3 text-gray-200 text-sm italic border-l-2 border-secondary/50 pl-3">
+                    <h4 className="font-bold text-xl text-white mb-4">{suggestion.title}</h4>
+                    <p className="mt-3 text-white/90 text-base italic border-l-4 border-white/50 pl-4 py-2 bg-white/10 rounded-r-lg">
                         "{suggestion.reason}"
                     </p>
-                    <form onSubmit={handleSuggestionSubmit} className="mt-5 space-y-4">
-                    <p className="text-xs text-gray-300">Get this article and subscribe for more insights from DigiGen.</p>
+                    <form onSubmit={handleSuggestionSubmit} className="mt-6 space-y-4">
+                    <p className="text-sm text-white/90 font-medium">Få artikeln direkt i din inkorg:</p>
                     <div className="flex items-center gap-2">
                         <input
                         type="email"
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
-                        placeholder="Enter your email"
+                        placeholder="Din e-postadress"
                         required
-                        className="flex-grow w-full bg-dark-700/50 border border-dark-700 rounded-md px-4 py-2 text-gray-100 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-light focus:border-primary-light transition-all duration-200"
+                        className="flex-grow w-full bg-white/95 border-2 border-white rounded-lg px-4 py-3 text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-white focus:border-white transition-all duration-200 font-medium"
                         />
                         <button 
                         type="submit"
                         disabled={isSubmittingSuggestion}
-                        aria-label="Send to my Inbox"
-                        className="flex-shrink-0 inline-flex items-center justify-center p-3 border border-transparent rounded-md shadow-sm text-white bg-primary hover:bg-primary-light focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-light focus:ring-offset-dark-900 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 transform hover:scale-105"
+                        aria-label="Skicka till min inkorg"
+                        className="flex-shrink-0 inline-flex items-center justify-center p-3 border-2 border-white rounded-lg shadow-lg text-purple-600 bg-white hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-purple-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 transform hover:scale-105"
                         >
                         {isSubmittingSuggestion ? (
-                            <span className="w-5 h-5 block border-2 border-t-transparent border-white rounded-full animate-spin"></span>
+                            <span className="w-5 h-5 block border-2 border-t-transparent border-purple-600 rounded-full animate-spin"></span>
                         ) : (
                             <SendIcon className="w-5 h-5"/>
                         )}
@@ -133,20 +133,21 @@ export const WidgetSidebar: React.FC<WidgetSidebarProps> = ({
                             type="checkbox"
                             checked={isSubscribed}
                             onChange={(e) => setIsSubscribed(e.target.checked)}
-                            className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary bg-dark-700/50"
+                            className="h-4 w-4 rounded border-white text-purple-600 focus:ring-white bg-white/90"
                         />
-                        <label htmlFor="subscribe" className="ml-2 block text-xs text-gray-300">
-                            Yes, subscribe me to the weekly newsletter.
+                        <label htmlFor="subscribe" className="ml-2 block text-sm text-white/90">
+                            Ja, prenumerera på vårt veckovisa nyhetsbrev.
                         </label>
                         </div>
                     </form>
                 </div>
             )}
             {submissionMessage && (
-                <div className={`text-center p-3 rounded-lg animate-fadeIn ${submissionMessage.startsWith("Error") ? 'bg-red-500/20 text-red-300' : 'bg-green-500/20 text-green-300'}`}>
-                    <p className="font-semibold text-sm">{submissionMessage}</p>
+                <div className={`text-center p-4 rounded-lg animate-fadeIn ${submissionMessage.startsWith("Error") ? 'bg-red-500/20 text-red-100 border-2 border-red-300' : 'bg-green-500/20 text-green-100 border-2 border-green-300'}`}>
+                    <p className="font-semibold">{submissionMessage}</p>
                 </div>
             )}
+            </div>
         </div>
         )}
     </div>
