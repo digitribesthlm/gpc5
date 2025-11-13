@@ -1,7 +1,8 @@
-
+// @ts-nocheck
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './App';
+import './index.css';
 
 // Wait until the browser has finished parsing the document.
 // This ensures that the <div id="root"></div> element is available
