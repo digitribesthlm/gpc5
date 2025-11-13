@@ -271,15 +271,16 @@ const App: React.FC = () => {
       const payload = { email, suggestedArticle: suggestion.title, hook: suggestion.reason, subscribedToNewsletter: isSubscribed };
       try {
         await submitLead(payload);
-        setSubmissionMessage(`Success! We've sent the article to ${email}.`);
+        setSubmissionMessage(`Tack! Vi har skickat artikeln till ${email}.`);
         setEmail('');
+        // Save success state in cookie so form stays hidden
+        document.cookie = `dg_submitted=true; path=/; max-age=${30 * 24 * 60 * 60}; domain=.${window.location.hostname.replace('www.', '')}; SameSite=Lax`;
       } catch (error) {
         console.error("Failed to submit lead:", error);
         const errorMessage = error instanceof Error ? error.message : "Could not send your request. Please try again.";
         setSubmissionMessage(`Error: ${errorMessage}`);
       } finally {
         setIsSubmittingSuggestion(false);
-        setTimeout(() => setSubmissionMessage(''), 5000);
       }
   };
 

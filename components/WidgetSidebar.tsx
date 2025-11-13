@@ -56,6 +56,9 @@ export const WidgetSidebar: React.FC<WidgetSidebarProps> = ({
   isSubscribed,
   setIsSubscribed,
 }) => {
+  // Check if user has already submitted their email
+  const hasSubmitted = document.cookie.includes('dg_submitted=true');
+  
   return (
     <div>
         {/* This section is only shown in the simulator mode */}
@@ -107,7 +110,7 @@ export const WidgetSidebar: React.FC<WidgetSidebarProps> = ({
             <h3>💡 AI Rekommenderar</h3>
             {isLoading && <p className="loading">Genererar din personliga rekommendation...</p>}
             {error && <div className="error-message">{error}</div>}
-            {suggestion && !submissionMessage && (
+            {suggestion && !submissionMessage && !hasSubmitted && (
                 <div>
                     <h4>{suggestion.title}</h4>
                     <div className="recommendation-text">
@@ -146,6 +149,15 @@ export const WidgetSidebar: React.FC<WidgetSidebarProps> = ({
             {submissionMessage && (
                 <div className={submissionMessage.startsWith("Error") ? 'error-message' : 'success-message'}>
                     {submissionMessage}
+                </div>
+            )}
+            {hasSubmitted && !submissionMessage && suggestion && (
+                <div>
+                    <h4>{suggestion.title}</h4>
+                    <div className="recommendation-text">
+                        {suggestion.reason}
+                    </div>
+                    <p style={{ marginTop: '1rem', color: '#28a745', fontWeight: '600' }}>✓ Du har redan prenumererat</p>
                 </div>
             )}
         </div>
