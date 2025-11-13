@@ -104,20 +104,20 @@ export const WidgetSidebar: React.FC<WidgetSidebarProps> = ({
 
         {/* Profile detection removed for privacy */}
         
-        {/* The suggestion widget appears after 2+ actions */}
-        {clickHistory.length > 1 && (
+        {/* The suggestion widget appears after 2+ actions and only when there's a suggestion */}
+        {clickHistory.length > 1 && (isLoading || suggestion) && (
         <div id="suggestion-widget">
-            <h3>💡 AI Rekommenderar</h3>
-            {isLoading && <p className="loading">Genererar din personliga rekommendation...</p>}
+            {isLoading && <p className="loading" style={{ textAlign: 'center' }}>Laddar...</p>}
             {error && <div className="error-message">{error}</div>}
             {suggestion && !submissionMessage && !hasSubmitted && (
                 <div>
-                    <h4>{suggestion.title}</h4>
-                    <div className="recommendation-text">
+                    <h3 style={{ fontSize: '1.25rem', fontWeight: '600', marginBottom: '1rem', color: '#212529' }}>📧 Prenumerera på vårt nyhetsbrev</h3>
+                    <p style={{ marginBottom: '1rem', color: '#495057' }}>Få <strong>{suggestion.title}</strong> och fler insikter direkt i din inkorg.</p>
+                    <div className="recommendation-text" style={{ fontSize: '0.95rem', padding: '0.75rem 1rem' }}>
                         {suggestion.reason}
                     </div>
                     <form onSubmit={handleSuggestionSubmit}>
-                    <p style={{ fontWeight: '600', marginBottom: '0.75rem' }}>Få artikeln direkt i din inkorg:</p>
+                    <p style={{ fontWeight: '600', marginBottom: '0.75rem', marginTop: '1.25rem' }}>Ange din e-postadress:</p>
                     <input
                         type="email"
                         value={email}
@@ -153,11 +153,12 @@ export const WidgetSidebar: React.FC<WidgetSidebarProps> = ({
             )}
             {hasSubmitted && !submissionMessage && suggestion && (
                 <div>
-                    <h4>{suggestion.title}</h4>
-                    <div className="recommendation-text">
+                    <h3 style={{ fontSize: '1.25rem', fontWeight: '600', marginBottom: '1rem', color: '#212529' }}>📧 Prenumerera på vårt nyhetsbrev</h3>
+                    <p style={{ marginBottom: '1rem', color: '#495057' }}>Rekommenderad artikel: <strong>{suggestion.title}</strong></p>
+                    <div className="recommendation-text" style={{ fontSize: '0.95rem', padding: '0.75rem 1rem' }}>
                         {suggestion.reason}
                     </div>
-                    <p style={{ marginTop: '1rem', color: '#28a745', fontWeight: '600' }}>✓ Du har redan prenumererat</p>
+                    <p style={{ marginTop: '1rem', color: '#28a745', fontWeight: '600', textAlign: 'center' }}>✓ Du har redan prenumererat</p>
                 </div>
             )}
         </div>
