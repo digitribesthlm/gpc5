@@ -1,0 +1,256 @@
+═══════════════════════════════════════════════════════════════════════════
+  DIGIGROWTH RECOMMENDATION WIDGET - WORDPRESS INTEGRATION GUIDE
+═══════════════════════════════════════════════════════════════════════════
+
+GOOD NEWS: Your app is working perfectly on Vercel! ✅
+URL: https://reco.digigrowth.se
+
+Now you just need to integrate it into your WordPress site.
+
+═══════════════════════════════════════════════════════════════════════════
+STEP 1: ADD THE WIDGET TO YOUR THEME
+═══════════════════════════════════════════════════════════════════════════
+
+Option A: Direct Script Tag (RECOMMENDED - Easiest)
+----------------------------------------------------
+Add this code to your theme's header.php file, just before </head>:
+
+<script type="module" crossorigin src="https://reco.digigrowth.se/assets/index-C3SW9N9o.js"></script>
+
+
+Option B: WordPress Functions.php (Alternative)
+------------------------------------------------
+Add this code to your theme's functions.php file:
+
+<?php
+function enqueue_digigrowth_widget() {
+    wp_enqueue_script(
+        'digigrowth-widget',
+        'https://reco.digigrowth.se/assets/index-C3SW9N9o.js',
+        array(),
+        null,
+        true
+    );
+    
+    // Add the module type attribute
+    add_filter('script_loader_tag', function($tag, $handle) {
+        if ('digigrowth-widget' === $handle) {
+            $tag = str_replace('<script ', '<script type="module" crossorigin ', $tag);
+        }
+        return $tag;
+    }, 10, 2);
+}
+add_action('wp_enqueue_scripts', 'enqueue_digigrowth_widget');
+?>
+
+
+═══════════════════════════════════════════════════════════════════════════
+STEP 2: ADD THE WIDGET CONTAINER TO YOUR SINGLE POST TEMPLATE
+═══════════════════════════════════════════════════════════════════════════
+
+Edit your single.php (or single-post.php) template and add this code where you 
+want the recommendation widget to appear (typically after the post content):
+
+<div id="root" 
+     data-api-host="https://reco.digigrowth.se" 
+     data-widget-mode="embedded"
+     data-page-context="<?php echo esc_attr(get_the_title()); ?>"
+     data-persona-clues='{"Business": 1, "Tech": 1}'>
+</div>
+
+
+═══════════════════════════════════════════════════════════════════════════
+STEP 3: CUSTOMIZE PERSONA CLUES (OPTIONAL BUT RECOMMENDED)
+═══════════════════════════════════════════════════════════════════════════
+
+For better personalization, customize the persona clues based on your article 
+categories. Here's an example:
+
+<?php
+// Determine persona clues based on post categories
+$persona_clues = array('Business' => 1, 'Tech' => 1);
+
+if (has_category('technical-seo') || has_category('seo')) {
+    $persona_clues = array(
+        'Tech' => 2, 
+        'Advanced' => 1, 
+        'Innovation' => 1, 
+        'Efficiency-Focused' => 3
+    );
+} elseif (has_category('business-strategy') || has_category('kundinsikter')) {
+    $persona_clues = array(
+        'Business' => 2, 
+        'Basic' => 1, 
+        'Cost-Conscious' => 2, 
+        'Risk' => 2
+    );
+} elseif (has_category('social-media')) {
+    $persona_clues = array(
+        'Business' => 1, 
+        'Basic' => 2, 
+        'Growth' => 2
+    );
+}
+
+$persona_json = json_encode($persona_clues);
+?>
+
+<div id="root" 
+     data-api-host="https://reco.digigrowth.se" 
+     data-widget-mode="embedded"
+     data-page-context="<?php echo esc_attr(get_the_title()); ?>"
+     data-persona-clues='<?php echo $persona_json; ?>'>
+</div>
+
+
+═══════════════════════════════════════════════════════════════════════════
+STEP 4: ADD CLICK TRACKING (OPTIONAL)
+═══════════════════════════════════════════════════════════════════════════
+
+To track user clicks across your site for better personalization, add this 
+script to your footer.php (before </body>):
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const articleLinks = document.querySelectorAll('main a, article a, .entry-content a');
+    const cookieName = 'dg_hist';
+
+    const getCookie = (name) => {
+        const value = `; ${document.cookie}`;
+        const parts = value.split(`; ${name}=`);
+        if (parts.length === 2) {
+            try {
+                return decodeURIComponent(parts.pop().split(';').shift());
+            } catch(e) {
+                return null;
+            }
+        }
+        return null;
+    };
+
+    articleLinks.forEach(link => {
+        if (link.href.includes(window.location.hostname) && 
+            !link.href.includes('/wp-admin') &&
+            !link.href.includes('/wp-login')) {
+            
+            link.addEventListener('click', function(event) {
+                const articleIdentifier = new URL(link.href).pathname;
+
+                let history = [];
+                try {
+                    const existingCookie = getCookie(cookieName);
+                    if (existingCookie && existingCookie.startsWith('[')) {
+                        history = JSON.parse(existingCookie);
+                    }
+                } catch (e) {
+                    history = [];
+                }
+
+                if (history[history.length - 1] !== articleIdentifier) {
+                    history.push(articleIdentifier);
+                }
+                
+                if (history.length > 10) {
+                    history.shift();
+                }
+
+                const expires = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toUTCString();
+                document.cookie = `${cookieName}=${encodeURIComponent(JSON.stringify(history))}; expires=${expires}; path=/; domain=.digigrowth.se; SameSite=Lax`;
+            });
+        }
+    });
+});
+</script>
+
+
+═══════════════════════════════════════════════════════════════════════════
+TESTING YOUR INTEGRATION
+═══════════════════════════════════════════════════════════════════════════
+
+1. Clear your browser cache
+2. Visit any article on your WordPress site
+3. Open browser console (F12) and check for errors
+4. The widget should appear after the article content
+5. Click on 2-3 internal article links
+6. The AI recommendation should appear after the 2nd click
+
+Test URL: https://www.digigrowth.se/kundinsikter/vad-ar-en-tillvaxtbyra-och-hur-kan-de-hjalpa-ditt-foretag/
+
+
+═══════════════════════════════════════════════════════════════════════════
+TROUBLESHOOTING
+═══════════════════════════════════════════════════════════════════════════
+
+Problem: Widget doesn't appear
+Solution: Check browser console for errors. Make sure the script is loaded.
+
+Problem: CORS errors
+Solution: Your environment variables in Vercel should be:
+  - MAIN_DOMAIN=www.digigrowth.se
+  - SUPDOMAIN=reco.digigrowth.se
+  - GEMINI_API_KEY=your_key_here
+  - N8N_WEBHOOK_URL=your_webhook_url
+
+Problem: Recommendations not generating
+Solution: Make sure you have GEMINI_API_KEY set in Vercel environment variables.
+
+Problem: Script file not found (404)
+Solution: The file name changes with each build. Check the latest filename at:
+  https://reco.digigrowth.se/
+  Look for: <script type="module" crossorigin src="/assets/index-XXXXX.js">
+  Update your integration code with the new filename.
+
+
+═══════════════════════════════════════════════════════════════════════════
+IMPORTANT NOTES
+═══════════════════════════════════════════════════════════════════════════
+
+1. The JavaScript filename (index-C3SW9N9o.js) will change every time you 
+   deploy to Vercel. You'll need to update it in your WordPress code after 
+   each deployment.
+
+2. To avoid this issue, you can use a fixed filename by modifying vite.config.ts
+   (see ADVANCED CONFIGURATION below)
+
+3. The widget requires at least 2 article clicks before showing recommendations
+
+4. Make sure your Vercel environment variables are properly configured
+
+
+═══════════════════════════════════════════════════════════════════════════
+ADVANCED: FIXED FILENAME CONFIGURATION
+═══════════════════════════════════════════════════════════════════════════
+
+To use a fixed filename that doesn't change with each build, update your
+vite.config.ts file to include:
+
+export default defineConfig(({ mode }) => {
+    const env = loadEnv(mode, '.', '');
+    return {
+      build: {
+        rollupOptions: {
+          output: {
+            entryFileNames: 'assets/widget.js',
+            chunkFileNames: 'assets/[name].js',
+            assetFileNames: 'assets/[name].[ext]'
+          }
+        }
+      },
+      // ... rest of config
+    };
+});
+
+Then use: https://reco.digigrowth.se/assets/widget.js in your WordPress code.
+
+
+═══════════════════════════════════════════════════════════════════════════
+NEED HELP?
+═══════════════════════════════════════════════════════════════════════════
+
+If you encounter any issues, check:
+1. Browser console for JavaScript errors
+2. Vercel deployment logs for backend errors
+3. WordPress error logs for PHP errors
+
+The widget is working perfectly on https://reco.digigrowth.se - you just need
+to integrate it into WordPress following the steps above!
